@@ -39,31 +39,35 @@ public final class BlockController extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		logger.debug("starting the block party yo!");
-
 		long start = System.nanoTime();
 
-		//lets try to see if we have a ip override
-		String ip = req.getParameter(config.getQsIpOverride());
-
-		if(ip == null || ip.length() == 0) {
-			//if we don't have a override default to remote address
-			ip = req.getRemoteAddr();
-			logger.debug("original ip: " + ip);
-
-			//lets now check to see if the request was forwarded for some other homie
+		logger.debug("checking client ip...");
+		String ip = req.getRemoteAddr();
+		//first lets check client ip
+		boolean isIpBlocked = ipBlockService.isIpBlocked(ip);
+		if(!isIpBlocked) {
+			logger.debug("client ip is not blocked.  checking X-FORWARDED-FOR");
+			//if client ip is not blocked lets check X-FORWARDED-FOR
 			String xForwardedIp = req.getHeader("X-FORWARDED-FOR");
 			if(xForwardedIp != null && xForwardedIp.length() > 0) {
 				//since the header gives a client,proxy1,proxy2,...,proxyn we split and just take the first one
 				String[] xfa = xForwardedIp.split(",");
 				ip = xfa[0];
+				isIpBlocked = ipBlockService.isIpBlocked(ip);
+
+				if(!isIpBlocked) {
+					logger.debug("X-FORWARDED-FOR is not blocked.  Checking qs param");
+					//if X-FORWARDED-FOR is not blocked then lets check query string param
+					ip = req.getParameter(config.getQsIpOverride());
+					isIpBlocked = ipBlockService.isIpBlocked(ip);
+				}
+			} else {
+				logger.debug("X-FORWARDED-FOR does not exist.  Checking qs param");
+				//if we don't have a X-FORWARDED-FOR check query string param 
+				ip = req.getParameter(config.getQsIpOverride());
+				isIpBlocked = ipBlockService.isIpBlocked(ip);
 			}
 		}
-
-		logger.debug("final ip: " + ip);
-
-		//now that we have our client ip lets see if it's blocked
-		boolean isIpBlocked = ipBlockService.isIpBlocked(ip);
-
 		long end = System.nanoTime() - start;
 		logger.debug("block party took: " + end + "ns");
 
