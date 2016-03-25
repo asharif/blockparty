@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ public class IpBlockService {
 
 	private Config config;
 	private ConcurrentHashMap<Long, Boolean> ipBlockMap = new ConcurrentHashMap<>();
-	private ArrayList<Integer> bitmasks = new ArrayList<>();
+	private HashSet<Integer> bitmasks = new HashSet<>();
 	private boolean autoRefreshInitialized = false;
 	
 	public IpBlockService withConfig(Config config) {
@@ -88,7 +88,7 @@ public class IpBlockService {
 		//tmp map to replace instance one
 		ConcurrentHashMap<Long, Boolean> tmpIpMap = new ConcurrentHashMap<>();
 		//tmp bitmasks to replace instance one
-		ArrayList<Integer> tmpBitmasks = new ArrayList<>();
+		HashSet<Integer> tmpBitmasks = new HashSet<>();
 
 		InputStream is = null;
 		BufferedReader br = null;
@@ -96,7 +96,7 @@ public class IpBlockService {
 
 		try {
 
-			logger.info("ip block list file is: " + IP_FILE);
+			logger.debug("ip block list file is: " + IP_FILE);
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(IP_FILE)));
 
 			String line = null;
@@ -128,7 +128,7 @@ public class IpBlockService {
 			//if we didn't have any errors replace old map with new one
 			if(!isError) {
 
-				logger.info("swapping maps and bitmasks after reload");
+				logger.debug("swapping maps and bitmasks after reload");
 				this.ipBlockMap = tmpIpMap;
 				this.bitmasks = tmpBitmasks;
 			}
@@ -140,7 +140,7 @@ public class IpBlockService {
 	 * @param ipLine 
 	 */
 	private void addIpToMap(String ipLine, ConcurrentHashMap<Long, Boolean> tmpIpMap,
-		ArrayList<Integer> tmpBitMasks) {
+		HashSet<Integer> tmpBitMasks) {
 
 		try {
 
@@ -149,17 +149,17 @@ public class IpBlockService {
 			if (ipMask.length == 1) {
 				//if length is 1 then we block single ip
 				long lIp = IpUtils.ipStringToLong(ipMask[0]);
-				logger.info("adding single ip to black list: " + ipLine + "=" + lIp);
+				logger.debug("adding single ip to black list: " + ipLine + "=" + lIp);
 				tmpIpMap.put(lIp, Boolean.TRUE);
 
 			} else if (ipMask.length == 2) {
 				//if length is 2 we block subnet 
-					int maskBits = Integer.parseInt(ipMask[1]);
+					int maskBits = Integer.parseInt(ipMask[1].trim());
 					//keep track of the bitmasks
 					tmpBitMasks.add(maskBits);
 
 					long lIp = IpUtils.ipStringToSubnetLong(ipMask[0], maskBits);
-					logger.info("adding subnet to black list: " + ipLine + "=" + lIp);
+					logger.debug("adding subnet to black list: " + ipLine + "=" + lIp);
 					tmpIpMap.put(lIp, Boolean.TRUE);
 				
 
