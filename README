@@ -1,5 +1,6 @@
 intro:
-	little project that can act as a middle man between incoming traffic and the source to drop traffic.  
+
+little project that can act as a middle man between incoming traffic and the source to drop traffic.  
 
 -The war is just over 700k not minimized.
 -After one run though of JIT is responds in under 500 microseconds.  Seen it get down under 150 microseconds after a few minutes of burn but my tests were not super rigorous.
@@ -10,6 +11,7 @@ build:
 - make debug (this builds a debug version that will have debug logging)
 
 files:
+
 -etc/config-{env}.properties - config settings for the app.  see the file.  
 *This is passed to the jvm via -Dorg.orphanware.blockparty.config.path=
 
@@ -19,9 +21,11 @@ files:
 -etc/logback-{env}.xml - the logback config file that will be embedded into war
 
 logs:
+
 by default logs go to logs/ directory. 
 -what to alarm on?  
 -any "ERROR" level logging.  there should be only "INFO" level logging or "DEBUG" level logging if a debug build
 
 license:
+
 MIT
