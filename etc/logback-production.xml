@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<configuration scan="true" scanPeriod="30 seconds">
+	<appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>./logs/block-party.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>./logs/block-party.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>10</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>[%date{dd-MM-yyyy HH:mm:ss.SSS}] [%t] %p %c - %m%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="org.orphanware.blockparty" level="INFO"/>
+
+	<root level="ERROR">
+		<appender-ref ref="ROLLING"/>
+	</root>
+
+</configuration>
+
