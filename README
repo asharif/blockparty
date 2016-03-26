@@ -2,6 +2,7 @@ intro:
 
 little project that can act as a middle man between incoming traffic and the source to drop traffic.  
 
+-It first checks the real ip, followed by the X-FORWARDED-FOR, and then finally by any optional request parameters
 -The war is just over 700k not minimized.
 -After one run though of JIT and debug logs turned off it responds in under 500 microseconds.  Seen it get down under 200 microseconds after a few minutes of burn but my tests were not super rigorous.
 
