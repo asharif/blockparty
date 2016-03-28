@@ -1,4 +1,4 @@
-package org.orphanware.config;
+package org.orphanware.blockparty.config;
 
 import java.io.FileInputStream;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package org.orphanware.blockparty.controller;
 
 import org.orphanware.blockparty.service.IpBlockService;
-import org.orphanware.config.Config;
+import org.orphanware.blockparty.config.Config;
 import java.io.IOException;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;

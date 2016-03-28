@@ -1,7 +1,7 @@
 package org.orphanware.blockparty.init;
 
 import org.orphanware.blockparty.service.IpBlockService;
-import org.orphanware.config.Config;
+import org.orphanware.blockparty.config.Config;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
