@@ -34,14 +34,6 @@ public class IpBlockService {
 
 	}
 
-	public void setIpBlockSet(HashSet<Long> ipBlockSet) {
-		this.ipBlockSet = ipBlockSet;
-	}
-
-	public void setBitmasks(HashSet<Integer> bitmasks) {
-		this.bitmasks = bitmasks;
-	}
-
 	/**
 	 * Get the singleton instance
 	 *
@@ -110,7 +102,7 @@ public class IpBlockService {
 
 			String line = null;
 			while ((line = br.readLine()) != null) {
-				addIpToMap(line, tmpIpSet, tmpBitmasks);
+				addIpToSet(line, tmpIpSet, tmpBitmasks);
 			}
 
 		} catch (IOException e) {
@@ -149,7 +141,7 @@ public class IpBlockService {
 	 *
 	 * @param ipLine
 	 */
-	public void addIpToMap(String ipLine, HashSet<Long> tmpIpSet,
+	private void addIpToSet(String ipLine, HashSet<Long> tmpIpSet,
 		HashSet<Integer> tmpBitMasks) {
 
 		try {

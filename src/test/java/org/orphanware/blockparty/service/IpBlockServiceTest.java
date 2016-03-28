@@ -1,5 +1,6 @@
 package org.orphanware.blockparty.service;
 
+import com.orphanware.blockparty.test.utils.TestUtils;
 import java.util.HashSet;
 import org.orphanware.blockparty.service.IpBlockService;
 import static junit.framework.Assert.*;
@@ -9,20 +10,22 @@ public final class IpBlockServiceTest {
 
 
 	@Test
-	public void testStraightMatch() {
+	public void testStraightMatch() throws Exception{
 
-		HashSet<Long> ips = new HashSet<>();
-		HashSet<Integer> bitmasks = new HashSet<>();
+		Object[] args = new Object[3];
+		args[1] = new HashSet<Long>();
+		args[2]= new HashSet<Integer>();
 
 		String[] ipList = {"192.168.1.1", "192.168.1.0/24"};
 		//make instance with map
 		IpBlockService ipBlockService = IpBlockService.getInstance();
 		for(String ip : ipList) {
-			ipBlockService.addIpToMap(ip, ips, bitmasks);
+			args[0] = ip;
+			TestUtils.callPrivateMethod(ipBlockService, "addIpToSet", args);
 		}
 
-		ipBlockService.setIpBlockSet(ips);
-		ipBlockService.setBitmasks(bitmasks);
+		TestUtils.setValueOnPrivateField(ipBlockService, "ipBlockSet", args[1]);
+		TestUtils.setValueOnPrivateField(ipBlockService, "bitmasks", args[2]);
 
 		String ip = "192.168.1.1";
 		//lets check to see if it blocks exacts correctly
