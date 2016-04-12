@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +22,7 @@ public class IpBlockService {
 	private static Object monitor = new Object();
 
 	private Config config;
-	private HashSet<Long> ipBlockSet = new HashSet<>();
-	private HashSet<Integer> bitmasks = new HashSet<>();
+	private HashMap<Integer, HashSet<Long>> maskToIpMap = new HashMap<>();
 	private boolean autoRefreshInitialized = false;
 
 
@@ -86,10 +87,8 @@ public class IpBlockService {
 	 */
 	private void loadIpFileIntoMaps() {
 
-		//tmp ip set to replace instance one
-		HashSet<Long> tmpIpSet = new HashSet<>();
-		//tmp bitmasks to replace instance one
-		HashSet<Integer> tmpBitmasks = new HashSet<>();
+		//temp map to replace instance one
+		HashMap<Integer, HashSet<Long>> tmpMaskToIpMap = new HashMap<>();
 
 		InputStream is = null;
 		BufferedReader br = null;
@@ -102,7 +101,7 @@ public class IpBlockService {
 
 			String line = null;
 			while ((line = br.readLine()) != null) {
-				addIpToSet(line, tmpIpSet, tmpBitmasks);
+				addIpToSet(line, tmpMaskToIpMap);
 			}
 
 		} catch (IOException e) {
@@ -129,9 +128,8 @@ public class IpBlockService {
 			//if we didn't have any errors replace old set with new one
 			if (!isError) {
 
-				logger.debug("swapping ip set and bitmasks after reload");
-				this.ipBlockSet = tmpIpSet;
-				this.bitmasks = tmpBitmasks;
+				logger.debug("swapping ip set after reload");
+				this.maskToIpMap = tmpMaskToIpMap;
 			}
 		}
 	}
@@ -141,32 +139,40 @@ public class IpBlockService {
 	 *
 	 * @param ipLine
 	 */
-	private void addIpToSet(String ipLine, HashSet<Long> tmpIpSet,
-		HashSet<Integer> tmpBitMasks) {
+	private void addIpToSet(String ipLine, HashMap<Integer, HashSet<Long>> tmpMaskToIpMap) {
 
 		try {
 
 			logger.debug(ipLine);
 			String[] ipMask = ipLine.split("/");
+			int bitmask = 32;
+			long lIp = -1;
 			if (ipMask.length == 1) {
 				//if length is 1 then we block single ip
-				long lIp = IpUtils.ipStringToLong(ipMask[0]);
+				lIp = IpUtils.ipStringToLong(ipMask[0]);
 				logger.debug("adding single ip to black list: " + ipLine + "=" + lIp);
-				tmpIpSet.add(lIp);
 
 			} else if (ipMask.length == 2) {
 				//if length is 2 we block subnet 
-				int maskBits = Integer.parseInt(ipMask[1].trim());
-				//keep track of the bitmasks
-				tmpBitMasks.add(maskBits);
-
-				long lIp = IpUtils.ipStringToSubnetLong(ipMask[0], maskBits);
+				bitmask = Integer.parseInt(ipMask[1].trim());
+				//ip is now a staring point to a subnet
+				lIp = IpUtils.ipStringToSubnetLong(ipMask[0], bitmask);
 				logger.debug("adding subnet to black list: " + ipLine + "=" + lIp);
-				tmpIpSet.add(lIp);
 
 			} else {
 				//otherwise we log an issue with this line and continue
 				logger.error("found a faulty ip line: " + ipLine);
+			}
+
+			if(lIp > -1) {
+				//we have something to work with
+				HashSet<Long> bitMaskIpSet = tmpMaskToIpMap.get(bitmask);
+				if(bitMaskIpSet == null) {
+					//if we don't have an entry lets make one
+					bitMaskIpSet = new HashSet<>();
+					tmpMaskToIpMap.put(bitmask, bitMaskIpSet);
+				}
+				bitMaskIpSet.add(lIp);
 			}
 
 		} catch (Exception e) {
@@ -184,25 +190,17 @@ public class IpBlockService {
 	 */
 	public boolean isIpBlocked(String ip) {
 
-		long lIp = IpUtils.ipStringToLong(ip);
-		//first we check a exact match
-		boolean result = ipBlockSet.contains(lIp);
+		boolean result = false;
+		for (Map.Entry<Integer, HashSet<Long>> entry : this.maskToIpMap.entrySet()) {
 
-		//if we don't have a hit then we check our bitmasks to mask the ip and try again
-		if (!result) {
-			logger.debug("exact match failed.  trying masked ip");
-			for (Integer bitmask : this.bitmasks) {
-				long maskedIp = IpUtils.ipStringToSubnetLong(ip, bitmask);
-				logger.debug("masked ip: " + maskedIp);
-				result = ipBlockSet.contains(maskedIp);
-				//if we have a hit we stop the loop
-				if (result) {
-					break;
-				}
+			long maskedIp = IpUtils.ipStringToSubnetLong(ip, entry.getKey());
+			result = entry.getValue().contains(maskedIp);
+			//if we have a hit we stop the loop
+			if (result) {
+				break;
 			}
 		}
 
-		logger.debug(String.format("ip: %s, lIp: %d, blocked: %b", ip, lIp, result));
 		return result;
 	}
 
