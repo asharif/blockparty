@@ -25,15 +25,10 @@ public final class IpUtils {
 			//do we have a valid ip?
 			if(octets.length == 4) {
 
-				for(int i=3; i >=0; --i) {
-
-					//lets get the first octet from left to right
-					long octet = Integer.parseInt(octets[3-i]);
-
-					//lets shift these suckers over to represent the correct magnitude
-					result |= octet << (8*i);
-
-				}
+				result |= (Long.parseLong(octets[0]) << 24);
+				result |= (Long.parseLong(octets[1]) << 16);
+				result |= (Long.parseLong(octets[2]) << 8);
+				result |= (Long.parseLong(octets[3]));
 
 			} 
 			
